@@ -8,6 +8,7 @@
 //  NOTE: assumes parser saved to "example_parser.h"
 
 #include "example_parser.h"
+#include "ParserTestCase.h"
 
 #include <filesystem>
 #include <string>
@@ -51,6 +52,34 @@ void collect_files(std::vector<std::string> &filenames, std::string dirname,
 }
 
 // ----------------------------------------------------------------------------
+void run_tests(int *tests_total, int *tests_failed)
+{
+	std::vector<ParserTestCase> ptcs;
+
+// TODO: systematically add tests for all rules in grammar definition
+	ptcs.push_back(ParserTestCase("arithmetic", "a = (b % c + d / e) - x * -y;", true));
+	ptcs.push_back(ParserTestCase("boolean arithmetic", "a = ~x & (y << 1) | (z >> 2) ^ w;", true));
+	ptcs.push_back(ParserTestCase("boolean logic", "a = !(x < 1) && (x < 10) || (x == 12);", true));
+	ptcs.push_back(ParserTestCase("nested parentheses", "a = ((1));", true));
+
+	ptcs.push_back(ParserTestCase("empty nested parentheses", "a = (());", false));
+
+	for (auto ptc : ptcs)
+	{
+		ASTNode astn(0, "ROOT");
+		Parser p(ptc.code());
+		bool result = (RET_OK == p.parse(astn));
+		(*tests_total)++;
+		eprintln("\t'", ptc.name(),"' ");
+		if (ptc.expected() != result)
+		{
+			(*tests_failed)++;
+			eprintln("\t\t*** FAILED ***");
+		}
+	}
+}
+
+// ----------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
 	if (argc < 2)
@@ -59,9 +88,18 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	int status = 0;
+	int tests_total = 0, tests_failed = 0;
 
-	// *.good.ipl
+	eprintln("");
+
+	// run built-in tests
+	eprintln("Running built-in test cases");
+	eprintln("---------------------------");
+	run_tests(&tests_total, &tests_failed);
+
+	eprintln("");
+
+	// run tests from *.good.ipl
 	eprintln("Testing expected good files");
 	eprintln("---------------------------");
 	std::vector<std::string> filenames;
@@ -85,9 +123,10 @@ int main(int argc, char **argv)
 		fclose(fp);
 		ASTNode astn(0, "ROOT");
 		Parser p(buf);
+		tests_total++;
 		if (RET_OK != p.parse(astn))
 		{
-			status = 1;
+			tests_failed++;
 			eprintln("ERROR: good file parse failed --- ", fn);
 			eprintln("last fully-parsed element is before line ", p.line(),
 				", col ", p.col(), ", file position ", p.pos(), " of ", p.len());
@@ -99,7 +138,7 @@ int main(int argc, char **argv)
 
 	eprintln("");
 
-	// *.bad.ipl
+	// run tests from *.bad.ipl
 	eprintln("Testing expected bad files");
 	eprintln("--------------------------");
 	filenames.clear();
@@ -123,16 +162,24 @@ int main(int argc, char **argv)
 		fclose(fp);
 		ASTNode astn(0, "ROOT");
 		Parser p(buf);
+		tests_total++;
 		if (RET_FAIL != p.parse(astn))
 		{
-			status = 1;
+			tests_failed++;
 			eprintln("ERROR: bad file parsed successfully --- ", fn);
 		}
 		delete[] buf;
 	}
 
-	if (0 == status) eprintln("PASSED");
+	eprintln("");
+
+	eprintln("tests    run = ", tests_total);
+	eprintln("      passed = ", tests_total - tests_failed);
+
+	eprintln("");
+
+	if (0 == tests_failed) eprintln("PASSED");
 	else eprintln("FAILED");
 
-	return status;
+	return (0 == tests_failed) ? 0 : 1;
 }

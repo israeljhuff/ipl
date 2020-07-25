@@ -57,12 +57,68 @@ void run_tests(int *tests_total, int *tests_failed)
 	std::vector<ParserTestCase> ptcs;
 
 // TODO: systematically add tests for all rules in grammar definition
+	ptcs.push_back(ParserTestCase("empty string", "", true));
+	ptcs.push_back(ParserTestCase("comment", "# this is a comment", true));
+
 	ptcs.push_back(ParserTestCase("arithmetic", "a = (b % c + d / e) - x * -y;", true));
 	ptcs.push_back(ParserTestCase("boolean arithmetic", "a = ~x & (y << 1) | (z >> 2) ^ w;", true));
 	ptcs.push_back(ParserTestCase("boolean logic", "a = !(x < 1) && (x < 10) || (x == 12);", true));
-	ptcs.push_back(ParserTestCase("nested parentheses", "a = ((1));", true));
 
-	ptcs.push_back(ParserTestCase("empty nested parentheses", "a = (());", false));
+	ptcs.push_back(ParserTestCase("nested parentheses", "a = ((1));", true));
+	// grouping parentheses must contain something
+	ptcs.push_back(ParserTestCase("empty nested parentheses", "a = ();", false));
+
+	ptcs.push_back(ParserTestCase("loop test #01", "loop {}", true));
+	ptcs.push_back(ParserTestCase("loop test #02", "loop post {}", true));
+	ptcs.push_back(ParserTestCase("loop test #03", "loop { break; }", true));
+	ptcs.push_back(ParserTestCase("loop test #04", "loop { continue; }", true));
+	ptcs.push_back(ParserTestCase("loop test #05", "loop { return; }", true));
+	ptcs.push_back(ParserTestCase("loop test #06", "loop (;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #07", "loop (a += 1;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #08", "loop (a += 1, b += 1;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #09", "loop (a = b - 7 * 5, c = d + 1, x = 5;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #10", "loop (int32 a = b, c = d + 1, x = 5;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #11", "loop (SomeClass a = 1, b = 2, c = 3;;) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #12", "loop (int32 a = 1, b = 2, c = 3; a < 10; a += 1, b += 1, c += 1) {}", true));
+
+	ptcs.push_back(ParserTestCase("vector test #01", "vector<sint32> foo1 = [];", true));
+	ptcs.push_back(ParserTestCase("vector test #02", "vector<sint32> foo2 = [ 5 ];", true));
+	ptcs.push_back(ParserTestCase("vector test #03", "vector<sint32> foo3 = [5,];", true));
+	ptcs.push_back(ParserTestCase("vector test #04", "vector<sint32> foo4 = [5,6];", true));
+	ptcs.push_back(ParserTestCase("vector test #05", "vector<sint32> foo2 = [2+7, asdf ];", true));
+	ptcs.push_back(ParserTestCase("vector test #06", "vector<vector<sint32>> foo2 = [[1], [2, 3]];", true));
+
+	// parser doesn't do type checking, so it will not fail on type mismatch in assignment
+	ptcs.push_back(ParserTestCase("map test #01", "map<uint32, customType > bar = 1;", true));
+	ptcs.push_back(ParserTestCase("map test #02", "map<uint32, customType > bar = [ \"a\" : 1];", true));
+	ptcs.push_back(ParserTestCase("map test #03", "map< uint32, vector < customType>> bar = [];", true));
+	ptcs.push_back(ParserTestCase("map test #04", "map< uint32, vector < customType>> bar = [1:1];", true));
+	ptcs.push_back(ParserTestCase("map test #05", "map< uint32, vector < customType>> bar = [ 1 : 1, asdf : 5 + 7, ];", true));
+
+	ptcs.push_back(ParserTestCase("function test #01", "void aVoidFunc() {}", true));
+	// parser does no type checking, so it will not fail on missing return statement
+	ptcs.push_back(ParserTestCase("function test #02", "uint32 aParameterlessFunc() {}", true));
+	ptcs.push_back(ParserTestCase("function test #03", "sint32 myfunc(uint32 foo, uint8 bar) {}", true));
+
+	// curly braces required (i.e. no forward declarations)
+	ptcs.push_back(ParserTestCase("function test #04", "void aVoidFunc()", false));
+	ptcs.push_back(ParserTestCase("function test #05", "void aVoidFunc();", false));
+	// cannot declare access specifier for a function (only for a method)
+	ptcs.push_back(ParserTestCase("function test #06", "public uint32 myFunc1() {}", false));
+
+	ptcs.push_back(ParserTestCase("class test #01", "class SomeClass {}", true));
+	ptcs.push_back(ParserTestCase("class test #02", "class SomeChildClass : SomeParentClass {}", true));
+	ptcs.push_back(ParserTestCase("class test #03", "class SomeClass { private int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #04", "class SomeClass { private int x = 1, y = 2; }", true));
+	ptcs.push_back(ParserTestCase("class test #05", "class SomeClass { protected int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #06", "class SomeClass { public int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #07", "class SomeClass { private void someMethod() {} }", true));
+	ptcs.push_back(ParserTestCase("class test #08", "class SomeClass { protected void someMethod() {} }", true));
+	ptcs.push_back(ParserTestCase("class test #09", "class SomeClass { public void someMethod() {} }", true));
+	// access specifier required
+	ptcs.push_back(ParserTestCase("class test #10", "class SomeClass { int x = 1; }", false));
+	// access specifier required
+	ptcs.push_back(ParserTestCase("class test #11", "class SomeClass { someMethod() {} }", false));
 
 	for (auto ptc : ptcs)
 	{
@@ -70,7 +126,7 @@ void run_tests(int *tests_total, int *tests_failed)
 		Parser p(ptc.code());
 		bool result = (RET_OK == p.parse(astn));
 		(*tests_total)++;
-		eprintln("\t'", ptc.name(),"' ");
+		eprintln("\t", ptc.name());
 		if (ptc.expected() != result)
 		{
 			(*tests_failed)++;
@@ -82,9 +138,9 @@ void run_tests(int *tests_total, int *tests_failed)
 // ----------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-	if (argc < 2)
+	if (argc < 1)
 	{
-		eprintln("Usage: ", argv[0], " <parent_dir_name>");
+		eprintln("Usage: ", argv[0], " [parent_dir_name]");
 		return 1;
 	}
 
@@ -97,81 +153,85 @@ int main(int argc, char **argv)
 	eprintln("---------------------------");
 	run_tests(&tests_total, &tests_failed);
 
-	eprintln("");
-
-	// run tests from *.good.ipl
-	eprintln("Testing expected good files");
-	eprintln("---------------------------");
-	std::vector<std::string> filenames;
-	collect_files(filenames, std::string(argv[1]), "good.ipl");
-	for (std::string fn : filenames)
+	// if parent_dir_name argument provided, run those test cases
+	if (argc > 1)
 	{
-		eprintln("\t", fn);
-		FILE *fp;
-		fp = fopen(fn.c_str(), "rb");
-		if (nullptr == fp)
+		eprintln("");
+
+		// run tests from *.good.ipl
+		eprintln("Testing expected good files");
+		eprintln("---------------------------");
+		std::vector<std::string> filenames;
+		collect_files(filenames, std::string(argv[1]), "good.ipl");
+		for (std::string fn : filenames)
 		{
-			eprintln("ERROR opening file: ", fn);
-			return 1;
+			eprintln("\t", fn);
+			FILE *fp;
+			fp = fopen(fn.c_str(), "rb");
+			if (nullptr == fp)
+			{
+				eprintln("ERROR opening file: ", fn);
+				return 1;
+			}
+			fseek(fp, 0, SEEK_END);
+			size_t file_len = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+			char *buf = new char[file_len + 1];
+			buf[file_len] = '\0';
+			size_t bytes_read = fread(buf, 1, file_len, fp);
+			fclose(fp);
+			ASTNode astn(0, "ROOT");
+			Parser p(buf);
+			tests_total++;
+			if (RET_OK != p.parse(astn))
+			{
+				tests_failed++;
+				eprintln("ERROR: good file parse failed --- ", fn);
+				eprintln("last fully-parsed element is before line ", p.line(),
+					", col ", p.col(), ", file position ", p.pos(), " of ", p.len());
+				eprintln("last partially-parsed element is before line ",
+					p.line_ok(), ", col ", p.col_ok());
+			}
+			delete[] buf;
 		}
-		fseek(fp, 0, SEEK_END);
-		size_t file_len = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		char *buf = new char[file_len + 1];
-		buf[file_len] = '\0';
-		size_t bytes_read = fread(buf, 1, file_len, fp);
-		fclose(fp);
-		ASTNode astn(0, "ROOT");
-		Parser p(buf);
-		tests_total++;
-		if (RET_OK != p.parse(astn))
+
+		eprintln("");
+
+		// run tests from *.bad.ipl
+		eprintln("Testing expected bad files");
+		eprintln("--------------------------");
+		filenames.clear();
+		collect_files(filenames, std::string(argv[1]), "bad.ipl");
+		for (std::string fn : filenames)
 		{
-			tests_failed++;
-			eprintln("ERROR: good file parse failed --- ", fn);
-			eprintln("last fully-parsed element is before line ", p.line(),
-				", col ", p.col(), ", file position ", p.pos(), " of ", p.len());
-			eprintln("last partially-parsed element is before line ",
-				p.line_ok(), ", col ", p.col_ok());
+			eprintln("\t", fn);
+			FILE *fp;
+			fp = fopen(fn.c_str(), "rb");
+			if (nullptr == fp)
+			{
+				eprintln("ERROR opening file: ", fn);
+				return 1;
+			}
+			fseek(fp, 0, SEEK_END);
+			size_t file_len = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+			char *buf = new char[file_len + 1];
+			buf[file_len] = '\0';
+			size_t bytes_read = fread(buf, 1, file_len, fp);
+			fclose(fp);
+			ASTNode astn(0, "ROOT");
+			Parser p(buf);
+			tests_total++;
+			if (RET_FAIL != p.parse(astn))
+			{
+				tests_failed++;
+				eprintln("ERROR: bad file parsed successfully --- ", fn);
+			}
+			delete[] buf;
 		}
-		delete[] buf;
+
+		eprintln("");
 	}
-
-	eprintln("");
-
-	// run tests from *.bad.ipl
-	eprintln("Testing expected bad files");
-	eprintln("--------------------------");
-	filenames.clear();
-	collect_files(filenames, std::string(argv[1]), "bad.ipl");
-	for (std::string fn : filenames)
-	{
-		eprintln("\t", fn);
-		FILE *fp;
-		fp = fopen(fn.c_str(), "rb");
-		if (nullptr == fp)
-		{
-			eprintln("ERROR opening file: ", fn);
-			return 1;
-		}
-		fseek(fp, 0, SEEK_END);
-		size_t file_len = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		char *buf = new char[file_len + 1];
-		buf[file_len] = '\0';
-		size_t bytes_read = fread(buf, 1, file_len, fp);
-		fclose(fp);
-		ASTNode astn(0, "ROOT");
-		Parser p(buf);
-		tests_total++;
-		if (RET_FAIL != p.parse(astn))
-		{
-			tests_failed++;
-			eprintln("ERROR: bad file parsed successfully --- ", fn);
-		}
-		delete[] buf;
-	}
-
-	eprintln("");
 
 	eprintln("tests    run = ", tests_total);
 	eprintln("      passed = ", tests_total - tests_failed);

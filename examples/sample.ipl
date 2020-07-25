@@ -125,7 +125,6 @@ vector<sint32> foo2 = [2+7, asdf ];
 
 map<uint32, customType > bar = 1;  # parser doesn't do type checking so this is ok during parsing step of compilation
 map< uint32, vector < customType>> bar = [];
-map< uint32, vector < customType>> bar = [];
 map< uint32, vector < customType>> bar = [1:1];
 map< uint32, vector < customType>> bar = [ 1 : 1, asdf : 5 + 7, ];
 

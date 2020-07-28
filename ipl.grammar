@@ -6,7 +6,7 @@
 ###############################################################################
 
 # root of parse tree ##########################################################
-program                       : wscm* ((class | flow_control | function_def | scope | statement) wscm*)*;
+program               mergeup : wscm* ((class | flow_control | function_def | scope | statement) wscm*)*;
 
 # whitespace ##################################################################
 ws                    discard : [ \n\r\t];
@@ -121,7 +121,8 @@ group                         : group_open expr_non_assign group_close;
 group_open            discard : "(" wscm*;
 group_close           discard : wscm* ")";
 
-identifier             inline : [A-Za-z_][0-9A-Za-z_]*;
+identifier                    : identifier_contents;
+identifier_contents    inline : [A-Za-z_][0-9A-Za-z_]*;
 literal                       : bool | float | integer | string | literal_vector | literal_map;
 
 # types #######################################################################
@@ -188,10 +189,12 @@ hex                    inline : [0-9A-Fa-f];
 
 # numbers #####################################################################
 bool                          : "true" | "false";
-integer                inline : [+\-]? ([0] | [1-9][0-9]*);
+integer                       : integer_contents;
+integer_contents       inline : [+\-]? ([0] | [1-9][0-9]*);
 
 # approximating C float syntax
-float                  inline : [+\-]?[0-9]+([.][0-9]*) exponent?
+float                         : float_contents;
+float_contents         inline : [+\-]?[0-9]+([.][0-9]*) exponent?
                                 |
                                 [+\-]?[0-9]*([.][0-9]+) exponent?
                                 |

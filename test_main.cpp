@@ -56,17 +56,42 @@ void run_tests(int *tests_total, int *tests_failed)
 {
 	std::vector<ParserTestCase> ptcs;
 
-// TODO: systematically add tests for all rules in grammar definition
-	ptcs.push_back(ParserTestCase("empty string", "", true));
+	ptcs.push_back(ParserTestCase("nothing to parse", "", true));
 	ptcs.push_back(ParserTestCase("comment", "# this is a comment", true));
+
+	ptcs.push_back(ParserTestCase("bool #01", "true;", true));
+	ptcs.push_back(ParserTestCase("bool #02", "false;", true));
+
+	ptcs.push_back(ParserTestCase("integer #01", "0;", true));
+	ptcs.push_back(ParserTestCase("integer #02", "1234;", true));
+	ptcs.push_back(ParserTestCase("integer #03", "0x5;", true));
+	ptcs.push_back(ParserTestCase("integer #04", "0x1;", true));
+	ptcs.push_back(ParserTestCase("integer #05", "0x1a;", true));
+	ptcs.push_back(ParserTestCase("integer #06", "0xe8;", true));
+
+	ptcs.push_back(ParserTestCase("float #01", "123.;", true));
+	ptcs.push_back(ParserTestCase("float #02", ".234;", true));
+	ptcs.push_back(ParserTestCase("float #03", "0.3;", true));
+	ptcs.push_back(ParserTestCase("float #04", "4.0;", true));
+	ptcs.push_back(ParserTestCase("float #05", "5e6;", true));
+	ptcs.push_back(ParserTestCase("float #06", "6.e7;", true));
+	ptcs.push_back(ParserTestCase("float #07", ".7e8;", true));
+	ptcs.push_back(ParserTestCase("float #08", "8.1e9;", true));
+	ptcs.push_back(ParserTestCase("float #09", "8.2e-9;", true));
+	ptcs.push_back(ParserTestCase("float #10", "8.3e+9;", true));
+
+	ptcs.push_back(ParserTestCase("string #01", "\"\";", true));
+	ptcs.push_back(ParserTestCase("string #02", "\"foo\";", true));
+	ptcs.push_back(ParserTestCase("string #03", "\"\\\"foo\\\"\";", true));
 
 	ptcs.push_back(ParserTestCase("arithmetic", "a = (b % c + d / e) - x * -y;", true));
 	ptcs.push_back(ParserTestCase("boolean arithmetic", "a = ~x & (y << 1) | (z >> 2) ^ w;", true));
 	ptcs.push_back(ParserTestCase("boolean logic", "a = !(x < 1) && (x < 10) || (x == 12);", true));
 
+	ptcs.push_back(ParserTestCase("parentheses", "a = (1);", true));
 	ptcs.push_back(ParserTestCase("nested parentheses", "a = ((1));", true));
-	// grouping parentheses must contain something
-	ptcs.push_back(ParserTestCase("empty nested parentheses", "a = ();", false));
+	// parentheses must contain something
+	ptcs.push_back(ParserTestCase("empty parentheses", "a = ();", false));
 
 	ptcs.push_back(ParserTestCase("loop test #01", "loop {}", true));
 	ptcs.push_back(ParserTestCase("loop test #02", "loop post {}", true));
@@ -88,7 +113,7 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("vector test #05", "vector<sint32> foo2 = [2+7, asdf ];", true));
 	ptcs.push_back(ParserTestCase("vector test #06", "vector<vector<sint32>> foo2 = [[1], [2, 3]];", true));
 
-	// parser doesn't do type checking, so it will not fail on type mismatch in assignment
+	// parser does no type checking, so it will not fail on type mismatch in assignment
 	ptcs.push_back(ParserTestCase("map test #01", "map<uint32, customType > bar = 1;", true));
 	ptcs.push_back(ParserTestCase("map test #02", "map<uint32, customType > bar = [ \"a\" : 1];", true));
 	ptcs.push_back(ParserTestCase("map test #03", "map< uint32, vector < customType>> bar = [];", true));
@@ -100,10 +125,10 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("function test #02", "uint32 aParameterlessFunc() {}", true));
 	ptcs.push_back(ParserTestCase("function test #03", "sint32 myfunc(uint32 foo, uint8 bar) {}", true));
 
-	// curly braces required (i.e. no forward declarations)
+	// curly braces required (i.e. no forward declarations allowed)
 	ptcs.push_back(ParserTestCase("function test #04", "void aVoidFunc()", false));
 	ptcs.push_back(ParserTestCase("function test #05", "void aVoidFunc();", false));
-	// cannot declare access specifier for a function (only for a method)
+	// cannot declare access specifier for a function, only for a method
 	ptcs.push_back(ParserTestCase("function test #06", "public uint32 myFunc1() {}", false));
 
 	ptcs.push_back(ParserTestCase("class test #01", "class SomeClass {}", true));

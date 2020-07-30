@@ -190,15 +190,18 @@ hex                    inline : [0-9A-Fa-f];
 # numbers #####################################################################
 bool                          : "true" | "false";
 integer                       : integer_contents;
-integer_contents       inline : [+\-]? ([0] | [1-9][0-9]*);
+integer_contents       inline : "0x" hex+ | [+\-]? ([0] | [1-9][0-9]*);
 
 # approximating C float syntax
 float                         : float_contents;
-float_contents         inline : [+\-]?[0-9]+([.][0-9]*) exponent?
-                                |
-                                [+\-]?[0-9]*([.][0-9]+) exponent?
-                                |
-                                [+\-]?[0-9]+ exponent?;
+float_contents         inline : [+\-]?
+                                (
+                                  [0-9]+ exponent
+                                  |
+                                  [0-9]+[.][0-9]* exponent?
+                                  |
+                                  [0-9]*[.][0-9]+ exponent?
+                                );
 exponent               inline : [eE][+\-]?[0-9]+;
 
 # literal vector ##############################################################

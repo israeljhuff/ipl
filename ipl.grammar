@@ -5,8 +5,10 @@
 # https://github.com/israeljhuff/ipl
 ###############################################################################
 
+# TODO: allow multiple strings side-by-side (eg. "abcd" "efg")
+
 # root of parse tree ##########################################################
-program               mergeup : wscm* ((class | flow_control | function_def | scope | statement) wscm*)*;
+program                       : wscm* ((class | flow_control | function_def | scope | statement) wscm*)*;
 
 # whitespace ##################################################################
 ws                    discard : [ \n\r\t];

@@ -159,7 +159,7 @@ sint32 myfunc(uint32 foo, uint8 bar)
   return bar + 10;
 }
 
-bool didItMatch = "a" =~ /(a*b+c[^d])|asdf|(x)/;
+bool didItMatch = "a" =~ /(a*b+c[^de-g])|asdf|(x)/;
 /a*b+c[^d]|asdf|(xs*a)/;
 /a*b+c[^d]|asdf|(xs+|(a|[^a-zA-Z])|b?c|d*)/;
 
@@ -248,3 +248,5 @@ class FFT
     }
   }
 }
+
+"\n";

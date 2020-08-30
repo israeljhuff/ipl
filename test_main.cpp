@@ -4,10 +4,8 @@
 // to build and run on Linux or Windows (Cygwin):
 //  g++ --std=c++17 test_main.cpp -o test_parser.exe
 //  ./test_parser.exe testdata
-//
-//  NOTE: assumes parser saved to "example_parser.h"
 
-#include "example_parser.h"
+#include "IPLParser.h"
 #include "ParserTestCase.h"
 
 #include <filesystem>
@@ -147,7 +145,7 @@ void run_tests(int *tests_total, int *tests_failed)
 
 	for (auto ptc : ptcs)
 	{
-		ASTNode astn(0, "ROOT");
+		ASTNode astn(0, 1, 1, "ROOT");
 		Parser p(ptc.code());
 		bool result = (RET_OK == p.parse(astn));
 		(*tests_total)++;
@@ -205,7 +203,7 @@ int main(int argc, char **argv)
 			buf[file_len] = '\0';
 			size_t bytes_read = fread(buf, 1, file_len, fp);
 			fclose(fp);
-			ASTNode astn(0, "ROOT");
+			ASTNode astn(0, 1, 1, "ROOT");
 			Parser p(buf);
 			tests_total++;
 			if (RET_OK != p.parse(astn))
@@ -244,7 +242,7 @@ int main(int argc, char **argv)
 			buf[file_len] = '\0';
 			size_t bytes_read = fread(buf, 1, file_len, fp);
 			fclose(fp);
-			ASTNode astn(0, "ROOT");
+			ASTNode astn(0, 1, 1, "ROOT");
 			Parser p(buf);
 			tests_total++;
 			if (RET_FAIL != p.parse(astn))

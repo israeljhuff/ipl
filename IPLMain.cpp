@@ -48,9 +48,16 @@ int main(int argc, char **argv)
 		eprintln("parsed successfully");
 
 		IPLEvaluatorImplementation iplei;
+		EvaluationStateImplementation esi;
 		// skip "ROOT" node and assume 1 child node
-		if (iplei.eval(astn.child(0))) eprintln("evaluated successfully");
-		else eprintln("ERROR evaluating");
+		if (iplei.eval(astn.child(0), esi))
+		{
+			eprintln("evaluated successfully");
+		}
+		else
+		{
+			eprintln("ERROR evaluating");
+		}
 	}
 	delete[] buf;
 	return 0;

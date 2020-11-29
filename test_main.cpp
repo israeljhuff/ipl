@@ -81,6 +81,8 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("string #01", "\"\";", true));
 	ptcs.push_back(ParserTestCase("string #02", "\"foo\";", true));
 	ptcs.push_back(ParserTestCase("string #03", "\"\\\"foo\\\"\";", true));
+	// multiple adjacent strings are allowed
+	ptcs.push_back(ParserTestCase("string #04", "\"multiple\" \" adjacent\" \" strings\";", true));
 
 	ptcs.push_back(ParserTestCase("arithmetic", "a = (b % c + d / e) - x * -y;", true));
 	ptcs.push_back(ParserTestCase("boolean arithmetic", "a = ~x & (y << 1) | (z >> 2) ^ w;", true));
@@ -103,6 +105,7 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("loop test #10", "loop (int32 a = b, c = d + 1, x = 5;;) {}", true));
 	ptcs.push_back(ParserTestCase("loop test #11", "loop (SomeClass a = 1, b = 2, c = 3;;) {}", true));
 	ptcs.push_back(ParserTestCase("loop test #12", "loop (int32 a = 1, b = 2, c = 3; a < 10; a += 1, b += 1, c += 1) {}", true));
+	ptcs.push_back(ParserTestCase("loop test #12", "loop post (int32 a = 1; a < 10; a += 1) {}", true));
 
 	ptcs.push_back(ParserTestCase("vector test #01", "vector<sint32> foo1 = [];", true));
 	ptcs.push_back(ParserTestCase("vector test #02", "vector<sint32> foo2 = [ 5 ];", true));
@@ -142,6 +145,18 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("class test #10", "class SomeClass { int x = 1; }", false));
 	// access specifier required
 	ptcs.push_back(ParserTestCase("class test #11", "class SomeClass { someMethod() {} }", false));
+
+	// empty regex not allowed
+	ptcs.push_back(ParserTestCase("regex test #01", "//;", false));
+	ptcs.push_back(ParserTestCase("regex test #02", "/1/;", true));
+	ptcs.push_back(ParserTestCase("regex test #03", "/[ab]/;", true));
+	ptcs.push_back(ParserTestCase("regex test #04", "/[a-z]/;", true));
+	ptcs.push_back(ParserTestCase("regex test #05", "/[a-z]*/;", true));
+	ptcs.push_back(ParserTestCase("regex test #06", "/[a-z]+/;", true));
+	ptcs.push_back(ParserTestCase("regex test #07", "/[a-z]?/;", true));
+	ptcs.push_back(ParserTestCase("regex test #07", "/[a-z]+|[0-9]+/;", true));
+	ptcs.push_back(ParserTestCase("regex test #08", "/[_A-Za-z][0-9_A-Za-z]*/;", true));
+	ptcs.push_back(ParserTestCase("regex test #08", "bool found =~ /[_A-Za-z][0-9_A-Za-z]*/;", true));
 
 	for (auto ptc : ptcs)
 	{

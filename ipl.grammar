@@ -5,8 +5,6 @@
 # https://github.com/israeljhuff/ipl
 ###############################################################################
 
-# TODO: allow multiple strings side-by-side (eg. "abcd" "efg")
-
 # root of parse tree ##########################################################
 program                       : wscm* ((class | flow_control | function_def | scope | statement) wscm*)*;
 
@@ -125,7 +123,7 @@ group_close           discard : wscm* ")";
 
 identifier                    : identifier_contents;
 identifier_contents    inline : [A-Za-z_][0-9A-Za-z_]*;
-literal                       : bool | float | integer | string | literal_vector | literal_map;
+literal                       : bool | float | integer | strings | literal_vector | literal_map;
 
 # types #######################################################################
 type                          : "sint8"  | "uint8"  |
@@ -176,8 +174,9 @@ ch_class_range_neg            : "!";
 ch_class_range_sep    discard : "-";
 ch_class_char          inline : [\u0020-\U0010ffff!\\!\]] | esc_ch_class_char;
 
-# double-quoted string ########################################################
-string                        : string_quote string_chars string_quote;
+# double-quoted strings #######################################################
+strings                       : strings_part (wscm* strings_part)*;
+strings_part          mergeup : string_quote string_chars string_quote;
 string_quote          discard : "\"";
 string_chars           inline : string_char*;
 string_char            inline : [\u0020-\U0010ffff!"!\\] | esc_string_char;

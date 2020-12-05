@@ -84,6 +84,14 @@ void run_tests(int *tests_total, int *tests_failed)
 	// multiple adjacent strings are allowed
 	ptcs.push_back(ParserTestCase("string #04", "\"multiple\" \" adjacent\" \" strings\";", true));
 
+	ptcs.push_back(ParserTestCase("identifer #01", "a;", true));
+	ptcs.push_back(ParserTestCase("identifer #02", "Avar;", true));
+	ptcs.push_back(ParserTestCase("identifer #03", "_avar;", true));
+	ptcs.push_back(ParserTestCase("identifer #04", "a_var;", true));
+	ptcs.push_back(ParserTestCase("identifer #05", "avar_;", true));
+	ptcs.push_back(ParserTestCase("identifer #06", "a1var_1;", true));
+	ptcs.push_back(ParserTestCase("identifer #07", "1var;", false));
+
 	ptcs.push_back(ParserTestCase("arithmetic", "a = (b % c + d / e) - x * -y;", true));
 	ptcs.push_back(ParserTestCase("boolean arithmetic", "a = ~x & (y << 1) | (z >> 2) ^ w;", true));
 	ptcs.push_back(ParserTestCase("boolean logic", "a = !(x < 1) && (x < 10) || (x == 12);", true));
@@ -92,6 +100,15 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("nested parentheses", "a = ((1));", true));
 	// parentheses must contain something
 	ptcs.push_back(ParserTestCase("empty parentheses", "a = ();", false));
+	// parentheses must match count
+	ptcs.push_back(ParserTestCase("too many closing parentheses", "a = ());", false));
+	ptcs.push_back(ParserTestCase("too many opening parentheses", "a = (();", false));
+	ptcs.push_back(ParserTestCase("group #01", "(1);", true));
+	ptcs.push_back(ParserTestCase("group #02", "(\"a literal string\");", true));
+	ptcs.push_back(ParserTestCase("group #03", "(someFunctionOrMethod(a, 1));", true));
+	ptcs.push_back(ParserTestCase("group #04", "(aVariable);", true));
+	// cannot assign in a group
+	ptcs.push_back(ParserTestCase("group #05", "(a = b + c);", false));
 
 	ptcs.push_back(ParserTestCase("loop test #01", "loop {}", true));
 	ptcs.push_back(ParserTestCase("loop test #02", "loop post {}", true));
@@ -125,26 +142,32 @@ void run_tests(int *tests_total, int *tests_failed)
 	// parser does no type checking, so it will not fail on missing return statement
 	ptcs.push_back(ParserTestCase("function test #02", "uint32 aParameterlessFunc() {}", true));
 	ptcs.push_back(ParserTestCase("function test #03", "sint32 myfunc(uint32 foo, uint8 bar) {}", true));
-
 	// curly braces required (i.e. no forward declarations allowed)
 	ptcs.push_back(ParserTestCase("function test #04", "void aVoidFunc()", false));
 	ptcs.push_back(ParserTestCase("function test #05", "void aVoidFunc();", false));
 	// cannot declare access specifier for a function, only for a method
 	ptcs.push_back(ParserTestCase("function test #06", "public uint32 myFunc1() {}", false));
 
-	ptcs.push_back(ParserTestCase("class test #01", "class SomeClass {}", true));
-	ptcs.push_back(ParserTestCase("class test #02", "class SomeChildClass : SomeParentClass {}", true));
-	ptcs.push_back(ParserTestCase("class test #03", "class SomeClass { private int x = 1; }", true));
-	ptcs.push_back(ParserTestCase("class test #04", "class SomeClass { private int x = 1, y = 2; }", true));
-	ptcs.push_back(ParserTestCase("class test #05", "class SomeClass { protected int x = 1; }", true));
-	ptcs.push_back(ParserTestCase("class test #06", "class SomeClass { public int x = 1; }", true));
-	ptcs.push_back(ParserTestCase("class test #07", "class SomeClass { private void someMethod() {} }", true));
-	ptcs.push_back(ParserTestCase("class test #08", "class SomeClass { protected void someMethod() {} }", true));
-	ptcs.push_back(ParserTestCase("class test #09", "class SomeClass { public void someMethod() {} }", true));
-	// access specifier required
-	ptcs.push_back(ParserTestCase("class test #10", "class SomeClass { int x = 1; }", false));
-	// access specifier required
-	ptcs.push_back(ParserTestCase("class test #11", "class SomeClass { someMethod() {} }", false));
+	ptcs.push_back(ParserTestCase("method test #01", "myMethod1();", true));
+	ptcs.push_back(ParserTestCase("method test #01", "someInstance.myMethod1();", true));
+	ptcs.push_back(ParserTestCase("method test #01", "someInstance.someSubInstance.myMethod1();", true));
+
+	// variable access specifier required
+	ptcs.push_back(ParserTestCase("class test #01", "class SomeClass { int x = 1; }", false));
+	// method access specifier required
+	ptcs.push_back(ParserTestCase("class test #02", "class SomeClass { void someMethod() {} }", false));
+	// method return type required
+	ptcs.push_back(ParserTestCase("class test #03", "class SomeClass { private someMethod() {} }", false));
+	ptcs.push_back(ParserTestCase("class test #04", "class SomeClass {}", true));
+	ptcs.push_back(ParserTestCase("class test #05", "class SomeChildClass : SomeParentClass {}", true));
+	ptcs.push_back(ParserTestCase("class test #06", "class SomeClass { private int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #07", "class SomeClass { private int x = 1, y = 2; }", true));
+	ptcs.push_back(ParserTestCase("class test #08", "class SomeClass { protected int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #09", "class SomeClass { public int x = 1; }", true));
+	ptcs.push_back(ParserTestCase("class test #10", "class SomeClass { private void someMethod() {} }", true));
+	ptcs.push_back(ParserTestCase("class test #11", "class SomeClass { protected void someMethod() {} }", true));
+	ptcs.push_back(ParserTestCase("class test #12", "class SomeClass { public void someMethod() {} }", true));
+	ptcs.push_back(ParserTestCase("class test #13", "class SomeClass { public int32 someMethod(int64 a, string b) {} }", true));
 
 	// empty regex not allowed
 	ptcs.push_back(ParserTestCase("regex test #01", "//;", false));
@@ -156,7 +179,11 @@ void run_tests(int *tests_total, int *tests_failed)
 	ptcs.push_back(ParserTestCase("regex test #07", "/[a-z]?/;", true));
 	ptcs.push_back(ParserTestCase("regex test #07", "/[a-z]+|[0-9]+/;", true));
 	ptcs.push_back(ParserTestCase("regex test #08", "/[_A-Za-z][0-9_A-Za-z]*/;", true));
-	ptcs.push_back(ParserTestCase("regex test #08", "bool found =~ /[_A-Za-z][0-9_A-Za-z]*/;", true));
+	ptcs.push_back(ParserTestCase("regex test #09", "/ab+(c|[de])*/;", true));
+	// check for match
+	ptcs.push_back(ParserTestCase("regex test #10", "bool found =~ /[_A-Za-z][0-9_A-Za-z]*/;", true));
+	// check for match and capture results
+	ptcs.push_back(ParserTestCase("regex test #11", "vector<string> matches =~ /x(([_A-Za-z])[0-9_A-Za-z]*)y/;", true));
 
 	for (auto ptc : ptcs)
 	{
@@ -169,6 +196,7 @@ void run_tests(int *tests_total, int *tests_failed)
 		{
 			(*tests_failed)++;
 			eprintln("\t\t*** FAILED ***");
+			eprintln("\t\t ", p.line_ok(), " ", p.col_ok());
 		}
 	}
 }

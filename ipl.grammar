@@ -82,7 +82,7 @@ statement_decl_vars           : expr_declare_vars wscm* statement_term;
 statement_term        discard : ";";
 
 # expressions #################################################################
-expression                    : expr_flow_control | expr_declare_vars | expr_assign_multiple | expr_non_assign;
+expression                    : expr_flow_control | expr_declare_vars | expr_assign_multiple | expr_non_assign | group;
 
 expr_declare_vars             : (type | expr_decl_vector_type | expr_decl_map_type | identifier)
                                 wscm+ expr_decl_vars_part (wscm* expr_decl_sep wscm* expr_decl_vars_part)*;
